@@ -43,35 +43,6 @@ void ANemesisWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// Print all components to check for custom overrides or offsets in the Blueprint subclass
-	TArray<UActorComponent*> ActorComponents;
-	GetComponents(ActorComponents);
-	for (UActorComponent* Component : ActorComponents)
-	{
-		if (USceneComponent* SceneComp = Cast<USceneComponent>(Component))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Weapon '%s' Component '%s' (%s) - RelativeLocation: %s, RelativeRotation: %s, RelativeScale: %s"),
-				*GetName(),
-				*SceneComp->GetName(),
-				*SceneComp->GetClass()->GetName(),
-				*SceneComp->GetRelativeLocation().ToString(),
-				*SceneComp->GetRelativeRotation().ToString(),
-				*SceneComp->GetRelativeScale3D().ToString());
-		}
-	}
-
-	// Reset relative location and rotation of meshes to ensure they align perfectly with the root scene component
-	if (WeaponMesh)
-	{
-		WeaponMesh->SetRelativeLocation(FVector::ZeroVector);
-		WeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
-	}
-	if (StaticWeaponMesh)
-	{
-		StaticWeaponMesh->SetRelativeLocation(FVector::ZeroVector);
-		StaticWeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
-	}
-
 	CurrentAmmo = MaxAmmo;
 	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
