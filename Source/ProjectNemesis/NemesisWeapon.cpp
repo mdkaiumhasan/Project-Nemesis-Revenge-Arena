@@ -42,6 +42,7 @@ void ANemesisWeapon::BeginPlay()
 	Super::BeginPlay();
 	
 	CurrentAmmo = MaxAmmo;
+	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
 void ANemesisWeapon::Fire()
@@ -78,11 +79,13 @@ void ANemesisWeapon::Fire()
 	}
 
 	CurrentAmmo = FMath::Max(0, CurrentAmmo - 1);
+	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
 void ANemesisWeapon::Reload()
 {
 	CurrentAmmo = MaxAmmo;
+	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
 
 void ANemesisWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -90,4 +93,9 @@ void ANemesisWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ANemesisWeapon, CurrentAmmo);
+}
+
+void ANemesisWeapon::OnRep_CurrentAmmo()
+{
+	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }

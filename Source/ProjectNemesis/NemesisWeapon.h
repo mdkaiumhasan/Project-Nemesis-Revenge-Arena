@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "NemesisWeapon.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedSignature, int32, CurrentAmmo, int32, MaxAmmo);
+
 UCLASS()
 class PROJECTNEMESIS_API ANemesisWeapon : public AActor
 {
@@ -18,6 +20,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void OnRep_CurrentAmmo();
 
 public:	
 	/* Weapon Mesh */
@@ -49,12 +54,16 @@ public:
 	int32 MaxAmmo;
 
 	/* Current ammo remaining */
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Stats")
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentAmmo, VisibleAnywhere, BlueprintReadOnly, Category = "Weapon Stats")
 	int32 CurrentAmmo;
 
 	/* Socket name to attach to player mesh */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Stats")
 	FName AttachSocketName;
+
+	/* Delegate fired when current ammo or max ammo changes */
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnAmmoChangedSignature OnAmmoChanged;
 
 	/* Perform line trace and damage target (called on server) */
 	UFUNCTION(BlueprintCallable, Category = "Combat")

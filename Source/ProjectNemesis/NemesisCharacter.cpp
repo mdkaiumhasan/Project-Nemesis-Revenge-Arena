@@ -320,6 +320,7 @@ void ANemesisCharacter::OnRep_CurrentWeapon()
 			CurrentWeapon->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, CurrentWeapon->AttachSocketName);
 		}
 	}
+	OnWeaponChanged.Broadcast(CurrentWeapon);
 }
 
 void ANemesisCharacter::OnFireTriggered()

@@ -7,6 +7,8 @@
 #include "InputActionValue.h"
 #include "NemesisCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponChangedSignature, class ANemesisWeapon*, NewWeapon);
+
 USTRUCT(BlueprintType)
 struct FModularCharacterParts
 {
@@ -235,6 +237,10 @@ public:
 	/* Server RPC to set the custom modular character parts authoritatively */
 	UFUNCTION(Server, Reliable, WithValidation, BlueprintCallable, Category = "Customization")
 	void ServerSetCharacterParts(const FModularCharacterParts& NewParts);
+
+	/* Delegate fired when the character equips or swaps their weapon */
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnWeaponChangedSignature OnWeaponChanged;
 
 public:
 	/** Returns CameraBoom subobject **/
