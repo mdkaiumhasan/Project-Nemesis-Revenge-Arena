@@ -190,3 +190,11 @@ This file tracks the conversation and design discussions between the User and th
   - Added `#include "Particles/ParticleSystem.h"` in [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp).
   - Pushed the fix to GitHub and instructed the user to trigger Live Coding compile (Ctrl+Alt+F11) again.
 
+### **Topic 22: Weapon Spawning Fallback after Live Coding Compile**
+* **User**: *ebar to hato e gun e nei* (This time, there is no gun in the hand.)
+* **Assistant**:
+  - Found in `ProjectNemesis.log` that `DefaultWeaponClass` was `Null` on start, meaning the Blueprint's default value for `DefaultWeaponClass` was reset to `None` in the editor (possibly due to hot-reload / blueprint serialization overrides).
+  - Modified [NemesisCharacter.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.cpp) to add a dynamic C++ runtime fallback in `BeginPlay()` that loads `/Game/Blueprints/Weapons/BP_Weapon_USP.BP_Weapon_USP_C` if `DefaultWeaponClass` is null.
+  - Pushed the changes to GitHub and guided the user to trigger Live Coding compile (Ctrl+Alt+F11) once more to restore the weapon spawn automatically.
+
+

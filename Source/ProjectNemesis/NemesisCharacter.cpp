@@ -21,6 +21,9 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
+#include "InputCoreTypes.h"
 
 // Sets default values
 ANemesisCharacter::ANemesisCharacter()
@@ -127,12 +130,96 @@ void ANemesisCharacter::BeginPlay()
 	// Load and set the initial/default character meshes
 	UpdateCharacterMeshes();
 
+	// Fallback to load default mapping context and core input actions if they are null
+	if (DefaultMappingContext == nullptr)
+	{
+		DefaultMappingContext = Cast<UInputMappingContext>(StaticLoadObject(UInputMappingContext::StaticClass(), nullptr, TEXT("/Game/Input/IMC_Default.IMC_Default")));
+		if (DefaultMappingContext)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Dynamically loaded DefaultMappingContext in BeginPlay"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("NEMESIS_DEBUG: Failed to load DefaultMappingContext in BeginPlay"));
+		}
+	}
+
+	if (MoveAction == nullptr)
+	{
+		MoveAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Move.IA_Move")));
+	}
+
+	if (LookAction == nullptr)
+	{
+		LookAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_MouseLook.IA_MouseLook")));
+		if (LookAction == nullptr)
+		{
+			LookAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Look.IA_Look")));
+		}
+	}
+
+	// Dynamic warnings for optional input action assets
+	if (SprintAction == nullptr)
+	{
+		SprintAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Sprint.IA_Sprint")));
+		if (!SprintAction)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: IA_Sprint asset not found at /Game/Input/Actions/IA_Sprint. Please create it in the editor."));
+		}
+	}
+
+	if (DecoyAction == nullptr)
+	{
+		DecoyAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Decoy.IA_Decoy")));
+		if (!DecoyAction)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: IA_Decoy asset not found at /Game/Input/Actions/IA_Decoy. Please create it in the editor."));
+		}
+	}
+
+	if (FireAction == nullptr)
+	{
+		FireAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Fire.IA_Fire")));
+		if (!FireAction)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: IA_Fire asset not found at /Game/Input/Actions/IA_Fire. Please create it in the editor."));
+		}
+	}
+
+	if (ReloadAction == nullptr)
+	{
+		ReloadAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Reload.IA_Reload")));
+		if (!ReloadAction)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: IA_Reload asset not found at /Game/Input/Actions/IA_Reload. Please create it in the editor."));
+		}
+	}
+
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Added DefaultMappingContext in BeginPlay"));
+
+			// Also add MouseLook mapping context if it exists
+			UInputMappingContext* MouseLookContext = Cast<UInputMappingContext>(StaticLoadObject(UInputMappingContext::StaticClass(), nullptr, TEXT("/Game/Input/IMC_MouseLook.IMC_MouseLook")));
+			if (MouseLookContext)
+			{
+				Subsystem->AddMappingContext(MouseLookContext, 0);
+				UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Added IMC_MouseLook in BeginPlay"));
+			}
+		}
+	}
+
+	// Fallback to load default weapon class dynamically if it was reset to null in the editor defaults
+	if (DefaultWeaponClass == nullptr)
+	{
+		DefaultWeaponClass = StaticLoadClass(ANemesisWeapon::StaticClass(), nullptr, TEXT("/Game/Blueprints/Weapons/BP_Weapon_USP.BP_Weapon_USP_C"));
+		if (DefaultWeaponClass)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Dynamically loaded DefaultWeaponClass in BeginPlay"));
 		}
 	}
 
@@ -197,12 +284,68 @@ void ANemesisCharacter::Tick(float DeltaTime)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = FMath::FInterpTo(GetCharacterMovement()->MaxWalkSpeed, TargetSpeed, DeltaTime, SpeedInterpSpeed);
 	}
+
+	// Bulletproof input polling fallback for Fire and Reload
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC && PC->IsLocalController())
+	{
+		if (PC->WasInputKeyJustPressed(EKeys::LeftMouseButton) || PC->WasInputKeyJustPressed(EKeys::RightMouseButton))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Mouse Button Press detected in Tick fallback. Triggering fire..."));
+			OnFireTriggered();
+		}
+		if (PC->WasInputKeyJustPressed(EKeys::R))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: R Key Press detected in Tick fallback. Triggering reload..."));
+			OnReloadTriggered();
+		}
+	}
 }
 
 // Called to bind functionality to input
 void ANemesisCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// Fallback to load default mapping context and core input actions if they are null
+	if (DefaultMappingContext == nullptr)
+	{
+		DefaultMappingContext = Cast<UInputMappingContext>(StaticLoadObject(UInputMappingContext::StaticClass(), nullptr, TEXT("/Game/Input/IMC_Default.IMC_Default")));
+	}
+	if (MoveAction == nullptr)
+	{
+		MoveAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Move.IA_Move")));
+	}
+	if (LookAction == nullptr)
+	{
+		LookAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_MouseLook.IA_MouseLook")));
+		if (LookAction == nullptr)
+		{
+			LookAction = Cast<UInputAction>(StaticLoadObject(UInputAction::StaticClass(), nullptr, TEXT("/Game/Input/Actions/IA_Look.IA_Look")));
+		}
+	}
+
+	// Add Input Mapping Context for the local player possessed pawn
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Added DefaultMappingContext in SetupPlayerInputComponent"));
+
+			// Also add MouseLook mapping context if it exists
+			UInputMappingContext* MouseLookContext = Cast<UInputMappingContext>(StaticLoadObject(UInputMappingContext::StaticClass(), nullptr, TEXT("/Game/Input/IMC_MouseLook.IMC_MouseLook")));
+			if (MouseLookContext)
+			{
+				Subsystem->AddMappingContext(MouseLookContext, 0);
+				UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Added IMC_MouseLook in SetupPlayerInputComponent"));
+			}
+		}
+	}
+
+	// Legacy / Direct Key Fallback bindings to ensure movement works even without Enhanced Input Action assets
+	PlayerInputComponent->BindAxis(TEXT("Turn Right / Left Mouse"), this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis(TEXT("Look Up / Down Mouse"), this, &APawn::AddControllerPitchInput);
 
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
@@ -341,11 +484,13 @@ void ANemesisCharacter::OnRep_CurrentWeapon()
 
 void ANemesisCharacter::OnFireTriggered()
 {
+	UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: ANemesisCharacter::OnFireTriggered called."));
 	ServerFire();
 }
 
 void ANemesisCharacter::OnReloadTriggered()
 {
+	UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: ANemesisCharacter::OnReloadTriggered called."));
 	ServerReload();
 }
 
@@ -356,6 +501,7 @@ bool ANemesisCharacter::ServerFire_Validate()
 
 void ANemesisCharacter::ServerFire_Implementation()
 {
+	UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: ANemesisCharacter::ServerFire_Implementation. CurrentWeapon: %s"), CurrentWeapon ? *CurrentWeapon->GetName() : TEXT("None"));
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Fire();
