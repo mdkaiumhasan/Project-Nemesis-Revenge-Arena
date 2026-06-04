@@ -333,7 +333,7 @@ void ANemesisCharacter::OnRep_CurrentWeapon()
 		USkeletalMeshComponent* CharacterMesh = GetMesh();
 		if (CharacterMesh)
 		{
-			CurrentWeapon->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, CurrentWeapon->AttachSocketName);
+			CurrentWeapon->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->AttachSocketName);
 		}
 	}
 	OnWeaponChanged.Broadcast(CurrentWeapon);
@@ -575,6 +575,12 @@ void ANemesisCharacter::UpdateCharacterMeshes()
 	if (HandsMesh) HandsMesh->SetLeaderPoseComponent(MainMesh);
 	if (FeetMesh) FeetMesh->SetLeaderPoseComponent(MainMesh);
 	if (VestMesh) VestMesh->SetLeaderPoseComponent(MainMesh);
+
+	// Re-attach the current weapon to the new mesh sockets to handle replication/initialization order issues on clients
+	if (CurrentWeapon)
+	{
+		OnRep_CurrentWeapon();
+	}
 }
 
 void ANemesisCharacter::OnRep_CharacterParts()
