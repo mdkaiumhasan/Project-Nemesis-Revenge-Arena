@@ -100,6 +100,32 @@ This file tracks the conversation and design discussions between the User and th
   - Compiled and verified the C++ project successfully.
   - Updated status logs and task lists.
 
+### **Topic 12: GitHub Clean Setup and Event-Driven UI Delegates**
+* **User**: *https://github.com/mdkaiumhasan/Nemesis-Project-.git eta amader github repo ekhane sobkichu update korbe. porer step shuru koro*
+* **Assistant**:
+  - Identified that the 4.76 GiB of local binary assets (`Content/` folder) was causing git push to repeatedly fail and time out.
+  - Re-created the local repository from scratch, configured `.gitignore` to exclude the huge `Content/` folder, and linked the repository to the new repo: `https://github.com/mdkaiumhasan/Project-Nemesis-Revenge-Arena.git`.
+  - Pushed the lightweight codebase successfully (only 26.52 KiB, 24 source/config files).
+  - Started the next roadmap item: **Diegetic Holographic Wrist HUD Widget UI setup**.
+  - Implemented event-driven UI delegates in C++: `OnWeaponChanged` in `ANemesisCharacter` and `OnAmmoChanged` in `ANemesisWeapon` with automatic `OnRep_CurrentAmmo` replication support.
+  - Successfully compiled the C++ project in 58 seconds and pushed the changes to GitHub.
 
 
+
+
+
+### **Topic 13: Holographic Wrist HUD Design**
+* **User**: UI elements design start, color codes, variable check constraints.
+* **Assistant**:
+  - Guided user to create Health Progress Bar (`Bar_Health`), Stamina Progress Bar (`Bar_Stamina`), Coins Text (`Txt_Coins`), and Ammo Text (`Txt_Ammo`).
+  - Specified vibrant neon green (`#00FFAA`) and neon orange/gold (`#FFAA00`) styling colors.
+  - Explicitly guided user to enable `Is Variable` for all widgets to allow dynamic graph updating.
+  - Guided user to implement the entire event-driven Blueprint bindings in `WBP_WristHUD` Event Graph (Construct -> Cast -> Promote to `MyCharacter` -> Bind Health, Stamina, Coins, and Weapon changes. Weapon change binds to new Weapon's Ammo changes, formatting and updating UI dynamically using division and `Format Text`).
+
+### **Topic 14: Camera Zoom-In/Out Glitch Fix**
+* **User**: *emon ase zoom in zoom out er moto hoy screen* (It behaves like zooming in and zooming out (the screen)).
+* **Assistant**:
+  - Diagnosed that the `USpringArmComponent` (camera boom) collision testing (which uses the `ECC_Camera` channel) was colliding with the character's own capsule component, main skeletal mesh, modular meshes, decoy capsule/mesh, and the attached `ANemesisWeapon`'s skeletal/static meshes, causing sudden camera zooms/jitter.
+  - Fixed the C++ code to explicitly ignore the `ECC_Camera` collision channel for all these components in their constructors (`ANemesisCharacter`, `ANemesisWeapon`, `ANemesisDecoy`).
+  - Temporarily terminated the running Unreal Editor process to release file locks on the binaries, successfully compiled the project using `UnrealBuildTool`, and pushed the changes to GitHub.
 

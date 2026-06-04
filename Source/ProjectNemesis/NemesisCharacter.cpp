@@ -84,6 +84,22 @@ ANemesisCharacter::ANemesisCharacter()
 	VestMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VestMesh"));
 	VestMesh->SetupAttachment(GetMesh());
 
+	// Ignore camera collision on capsule and all character meshes to prevent camera zoom-in glitches
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	}
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	}
+	if (HeadMesh) HeadMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	if (TorsoMesh) TorsoMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	if (LegsMesh) LegsMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	if (HandsMesh) HandsMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	if (FeetMesh) FeetMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	if (VestMesh) VestMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
 	// Set default weapon class using class finder
 	static ConstructorHelpers::FClassFinder<ANemesisWeapon> WeaponClassFinder(TEXT("/Game/Blueprints/Weapons/BP_Weapon_USP.BP_Weapon_USP_C"));
 	if (WeaponClassFinder.Class != nullptr)

@@ -23,9 +23,11 @@ ANemesisWeapon::ANemesisWeapon()
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(RootComponent);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	StaticWeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticWeaponMesh"));
 	StaticWeaponMesh->SetupAttachment(RootComponent);
+	StaticWeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	WeaponCost = 500;
 	Damage = 20.f;

@@ -37,6 +37,7 @@ Project Nemesis is a high-intensity, psychological 1v1 Battle Royale / Arena gam
 *   [x] **Enhanced Input Mapping:** `IMC_Default` bound to C++ actions (`MoveAction`, `LookAction`, `SprintAction`, `DecoyAction`, `FireAction`, `ReloadAction`).
 *   [x] **C++ Movement Physics:** Acceleration configurations, spring-arm camera damping/lag, and momentum-based speed transitions in `ANemesisCharacter`.
 *   [x] **Sprint & Stamina Loop:** Frame-independent stamina drainage and regeneration logic mapped to movement states.
+*   [x] **Camera Collision Glitch Fix:** Configured character capsule, main skeletal mesh, modular meshes, decoy components, and weapon skeletal/static meshes to ignore the `ECC_Camera` collision channel, eliminating camera jitter and sudden zoom-in/out glitches.
 
 ### Phase 2: Character States & Attribute System (Status: [x] Implemented)
 *   [x] **Custom Attribute Component:** `UNemesisAttributeComponent` manages Health, Stamina, and Coins (with delegates for UI binding).
@@ -58,7 +59,8 @@ Project Nemesis is a high-intensity, psychological 1v1 Battle Royale / Arena gam
 
 ### Phase 5: UI, Audio, & Game Loop (Status: [/] Partially Implemented)
 *   [x] **GameMode Rules:** Win-condition tracking (best of 5 rounds), coin awards (1000 to winner, 600 to loser), and character state resets/round teleportation.
-*   [/] **Diegetic HUD (Wristband):** C++ foundation implemented (`WristHUDComponent` created and configured in C++). Widget logic and placement configurations to be fine-tuned in the Editor.
+*   [/] **Diegetic HUD (Wristband):** Designed HUD layout and event-driven Blueprint bindings in `WBP_WristHUD` for Health, Stamina, Coins, and Weapon/Ammo delegates. Next is assigning the class to character's WristHUDComponent and alignment.
+*   [x] **Event-Driven UI Delegates:** Implemented `OnWeaponChanged` in `ANemesisCharacter` and `OnAmmoChanged` in `ANemesisWeapon` with automatic `OnRep_CurrentAmmo` replication support for performant event-driven HUD updates. Widget design and placement configurations to be fine-tuned in the Editor.
 *   [ ] **Save System:** Player stats and level transitions via binary SaveGames (`USaveGame`).
 *   [ ] **VFX/SFX Integration:** Impact particles, footsteps synchronized via Anim Notifies.
 

@@ -3,6 +3,8 @@
 
 #include "NemesisDecoy.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 ANemesisDecoy::ANemesisDecoy()
@@ -20,6 +22,16 @@ ANemesisDecoy::ANemesisDecoy()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 800.f;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+	}
+
+	// Ignore camera collision on capsule and mesh components
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	}
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	}
 }
 
