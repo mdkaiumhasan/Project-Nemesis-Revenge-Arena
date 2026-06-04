@@ -333,6 +333,12 @@ void ANemesisCharacter::OnRep_CurrentWeapon()
 		USkeletalMeshComponent* CharacterMesh = GetMesh();
 		if (CharacterMesh)
 		{
+			bool bSocketExists = CharacterMesh->DoesSocketExist(CurrentWeapon->AttachSocketName);
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: OnRep_CurrentWeapon - Attaching weapon '%s' to socket '%s'. DoesSocketExist: %s"), 
+				*CurrentWeapon->GetName(), 
+				*CurrentWeapon->AttachSocketName.ToString(), 
+				bSocketExists ? TEXT("True") : TEXT("False"));
+
 			CurrentWeapon->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, CurrentWeapon->AttachSocketName);
 		}
 	}
@@ -579,6 +585,7 @@ void ANemesisCharacter::UpdateCharacterMeshes()
 	// Re-attach the current weapon to the new mesh sockets to handle replication/initialization order issues on clients
 	if (CurrentWeapon)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: UpdateCharacterMeshes - Re-triggering weapon attachment after mesh update."));
 		OnRep_CurrentWeapon();
 	}
 }
