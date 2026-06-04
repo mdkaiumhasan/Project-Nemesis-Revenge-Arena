@@ -43,6 +43,18 @@ void ANemesisWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// Reset relative location and rotation of meshes to ensure they align perfectly with the root scene component
+	if (WeaponMesh)
+	{
+		WeaponMesh->SetRelativeLocation(FVector::ZeroVector);
+		WeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	}
+	if (StaticWeaponMesh)
+	{
+		StaticWeaponMesh->SetRelativeLocation(FVector::ZeroVector);
+		StaticWeaponMesh->SetRelativeRotation(FRotator::ZeroRotator);
+	}
+
 	CurrentAmmo = MaxAmmo;
 	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
 }
