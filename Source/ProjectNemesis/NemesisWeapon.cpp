@@ -14,6 +14,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Sound/SoundBase.h"
+#include "Particles/ParticleSystem.h"
 
 // Sets default values
 ANemesisWeapon::ANemesisWeapon()

@@ -183,10 +183,10 @@ This file tracks the conversation and design discussions between the User and th
   - Attempted to build, which revealed that compilation is locked because the Unreal Editor is open and Live Coding is active.
   - Instructed the user to run Live Coding (Ctrl+Alt+F11) in the editor to compile the changes.
 
-### **Topic 21: Session Pause & Next Steps**
-* **User**: *ok ekhon progress ad chat record kore rakho baki kaj amra agamikal korbo*
+### **Topic 21: Live Coding Compile Error and Fix**
+* **User**: Tried compiling via Live Coding but got a compile error in `NemesisWeapon.cpp` related to `ConstructorHelpers::FObjectFinder<UParticleSystem>` failing to convert to `UObject*`.
 * **Assistant**:
-  - Saved and documented all current C++ progress and chat history in [chat.md](file:///d:/tmp/game/ProjectNemesis/chat.md) and [current_status.md](file:///d:/tmp/game/ProjectNemesis/current_status.md).
-  - Pushed all updates to GitHub successfully.
-  - Aligned the roadmap to resume with testing the Live Coding compilation and verifying the weapon firing visual/audio feedback tomorrow.
+  - Diagnosed that the compiler did not know `UParticleSystem` inherits from `UObject` because it was only forward-declared in the header and not included in `NemesisWeapon.cpp`.
+  - Added `#include "Particles/ParticleSystem.h"` in [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp).
+  - Pushed the fix to GitHub and instructed the user to trigger Live Coding compile (Ctrl+Alt+F11) again.
 
