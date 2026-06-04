@@ -9,6 +9,11 @@
 #include "GameFramework/Controller.h"
 #include "Engine/DamageEvents.h"
 #include "Net/UnrealNetwork.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/Engine.h"
+#include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Sound/SoundBase.h"
 
 // Sets default values
 ANemesisWeapon::ANemesisWeapon()
@@ -35,7 +40,27 @@ ANemesisWeapon::ANemesisWeapon()
 	Range = 10000.f;
 	MaxAmmo = 30;
 	CurrentAmmo = MaxAmmo;
-	AttachSocketName = TEXT("Hand_R");
+	AttachSocketName = TEXT("hand_r");
+
+	// Load default sound using ObjectFinder
+	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue"));
+	if (FireSoundFinder.Succeeded())
+	{
+		FireSound = FireSoundFinder.Object;
+	}
+
+	// Load default particles using ObjectFinder
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashFinder(TEXT("/Game/ParagonLtBelica/FX/Particles/Belica/Abilities/Primary/FX/P_BelicaMuzzle.P_BelicaMuzzle"));
+	if (MuzzleFlashFinder.Succeeded())
+	{
+		MuzzleFlash = MuzzleFlashFinder.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> ImpactEffectFinder(TEXT("/Game/ParagonLtBelica/FX/Particles/Belica/Abilities/Primary/FX/P_BelicaHitWorld.P_BelicaHitWorld"));
+	if (ImpactEffectFinder.Succeeded())
+	{
+		ImpactEffect = ImpactEffectFinder.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -49,10 +74,21 @@ void ANemesisWeapon::BeginPlay()
 
 void ANemesisWeapon::Fire()
 {
-	if (CurrentAmmo <= 0) return;
+	UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: ANemesisWeapon::Fire called. Actor: %s, CurrentAmmo: %d, MaxAmmo: %d, Owner: %s"), 
+		*GetName(), CurrentAmmo, MaxAmmo, GetOwner() ? *GetOwner()->GetName() : TEXT("None"));
+
+	if (CurrentAmmo <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Cannot fire - No Ammo remaining!"));
+		return;
+	}
 
 	APawn* PawnOwner = Cast<APawn>(GetOwner());
-	if (!PawnOwner) return;
+	if (!PawnOwner)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Cannot fire - PawnOwner is null!"));
+		return;
+	}
 
 	AController* ControllerOwner = PawnOwner->GetController();
 	if (!ControllerOwner) return;
@@ -69,7 +105,37 @@ void ANemesisWeapon::Fire()
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.AddIgnoredActor(PawnOwner);
 
-	if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, ECC_Visibility, QueryParams))
+	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, ECC_Visibility, QueryParams);
+
+	// Visual Feedback: Draw a bright red tracer line from the weapon's location to the target/impact point
+	FVector TracerStart = GetActorLocation();
+	FVector TracerEnd = bHit ? Hit.ImpactPoint : TraceEnd;
+	DrawDebugLine(GetWorld(), TracerStart, TracerEnd, FColor::Red, false, 0.2f, 0, 2.0f);
+
+	// Play gunshot sound at gun location
+	if (FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, TracerStart);
+	}
+
+	// Spawn AAA Paragon muzzle flash attached to the active weapon component
+	if (MuzzleFlash)
+	{
+		if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset())
+		{
+			UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, WeaponMesh, TEXT("Muzzle"));
+		}
+		else if (StaticWeaponMesh && StaticWeaponMesh->GetStaticMesh())
+		{
+			UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, StaticWeaponMesh, TEXT("Muzzle"));
+		}
+		else
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MuzzleFlash, TracerStart, GetActorRotation());
+		}
+	}
+
+	if (bHit)
 	{
 		AActor* HitActor = Hit.GetActor();
 		if (HitActor)
@@ -78,16 +144,37 @@ void ANemesisWeapon::Fire()
 			FDamageEvent DamageEvent;
 			HitActor->TakeDamage(Damage, DamageEvent, ControllerOwner, PawnOwner);
 		}
+
+		// Draw a debug sphere at impact point
+		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 12.f, 8, FColor::Red, false, 0.5f);
+
+		// Spawn AAA Paragon impact visual effects at the hit location
+		if (ImpactEffect)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
+		}
 	}
 
 	CurrentAmmo = FMath::Max(0, CurrentAmmo - 1);
 	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
+
+	// On-screen message showing ammo count
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, FString::Printf(TEXT("Weapon Fired! Ammo: %d / %d"), CurrentAmmo, MaxAmmo));
+	}
 }
 
 void ANemesisWeapon::Reload()
 {
 	CurrentAmmo = MaxAmmo;
 	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
+
+	// On-screen message showing reload
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("Weapon Reloaded!"));
+	}
 }
 
 void ANemesisWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

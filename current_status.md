@@ -33,8 +33,8 @@ Project Nemesis is a high-intensity, psychological 1v1 Battle Royale / Arena gam
 
 ## 🛠️ 2. Roadmap Alignment & Current Implementation Status
 
-### Phase 1: Core Character & Movement (Status: [x] Implemented)
-*   [x] **Enhanced Input Mapping:** `IMC_Default` bound to C++ actions (`MoveAction`, `LookAction`, `SprintAction`, `DecoyAction`, `FireAction`, `ReloadAction`).
+### Phase 1: Core Character & Movement (Status: [/] Partially Implemented)
+*   [/] **Enhanced & Hybrid Input Mapping:** Added dynamic fallback loading in C++ for `IMC_Default`, `IMC_MouseLook`, `IA_Move`, `IA_MouseLook`, and `IA_Look` to handle missing editor references. Reconfigured mapping context injection to occur both in `BeginPlay()` and `SetupPlayerInputComponent()` (possession-time) to prevent client-side desyncs. Implemented direct legacy key fallback bindings for mouse look axis, and added a direct hardware key polling system in `Tick()` using `WasInputKeyJustPressed()` for firing (`LeftMouseButton`/`RightMouseButton`) and reloading (`R`) to bypass Enhanced Input action intercepts and guarantee weapon mechanics work immediately without editor asset dependencies.
 *   [x] **C++ Movement Physics:** Acceleration configurations, spring-arm camera damping/lag, and momentum-based speed transitions in `ANemesisCharacter`.
 *   [x] **Sprint & Stamina Loop:** Frame-independent stamina drainage and regeneration logic mapped to movement states.
 *   [x] **Camera Collision Glitch Fix:** Configured character capsule, main skeletal mesh, modular meshes, decoy components, and weapon skeletal/static meshes to ignore the `ECC_Camera` collision channel, eliminating camera jitter and sudden zoom-in/out glitches.
@@ -45,8 +45,8 @@ Project Nemesis is a high-intensity, psychological 1v1 Battle Royale / Arena gam
 *   [x] **Death States:** Implemented ragdoll simulation, input locking, capsule collision disabling, and notifying `ANemesisGameMode` of death.
 
 ### Phase 3: Combat & Interaction (Status: [/] Partially Implemented)
-*   [x] **Weapon Attachment:** Authoritative spawning and skeletal/static mesh socket binding via C++ (reconfigured `ANemesisWeapon` with a scene root to support both Static and Skeletal meshes).
-*   [x] **Precision Hit Detection:** Server-side line-trace single hit detection (`LineTraceSingleByChannel`) inside `ANemesisWeapon`.
+*   [x] **Weapon Attachment & Socket Alignment:** Authoritative spawning and skeletal/static mesh socket binding via C++. Reconfigured `ANemesisWeapon` with a scene root to support both Static and Skeletal meshes. Implemented fixes for client-side replication timing, scale override issues (using `SnapToTargetNotIncludingScale`), and verified weapon attachment at runtime when mesh changes. Configured the default attach socket name to `hand_r` in C++ to align with the modular character skeleton.
+*   [x] **Precision Hit Detection & Visual/Screen Feedback:** Server-side line-trace single hit detection (`LineTraceSingleByChannel`) inside `ANemesisWeapon`. Implemented visual debug tracer lines (`DrawDebugLine` in red) and impact spheres (`DrawDebugSphere` in red) to show bullet trajectories instantly on screen. Added real-time screen text feedback (`GEngine->AddOnScreenDebugMessage`) for ammo count and reload state, and resolved a double-firing bug. Programmed C++ properties for `FireSound`, `MuzzleFlash`, and `ImpactEffect`, loading AAA Paragon particle assets (`P_BelicaMuzzle` and `P_BelicaHitWorld`) and a default metallic placeholder sound cue (`Footstep_Metal_Cue`) in the constructor, playing them dynamically on weapon fire.
 *   [x] **Weapon Blueprints & Stats Configuration:** Created and configured all 13 weapons (USP, Deagle, M4A1S, AK47, AWP, MP5, MP40, Thompson, Model 12, Sawn-Off, Yalguzag, Knife, Katana) as Blueprints inheriting from `ANemesisWeapon` with appropriate static/skeletal meshes, custom stats, and material masking (`M_Invisible`).
 *   [x] **Replicated Modular Customization:** Added `FModularCharacterParts` struct and `CharacterParts` replicated property to C++ `ANemesisCharacter` to support dynamic mesh swapping and animation syncing via `LeaderPoseComponent` for both modular and single-mesh outfits.
 *   [ ] **Montage System:** Swing/firing montages have not yet been implemented in C++ (firing is currently instant trace-on-trigger).

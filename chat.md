@@ -129,3 +129,57 @@ This file tracks the conversation and design discussions between the User and th
   - Fixed the C++ code to explicitly ignore the `ECC_Camera` collision channel for all these components in their constructors (`ANemesisCharacter`, `ANemesisWeapon`, `ANemesisDecoy`).
   - Temporarily terminated the running Unreal Editor process to release file locks on the binaries, successfully compiled the project using `UnrealBuildTool`, and pushed the changes to GitHub.
 
+---
+
+## 📅 Session: 2026-06-05
+
+### **Topic 15: Session Startup & Project Status Audit**
+* **User**: *na amra onek samne achi sompurno project chek koro ar ekhon theke chat and current statush save korbe sathe sathe*
+* **Assistant**:
+  - Checked the entire C++ codebase and local repository status.
+  - Confirmed the local repo is aligned with the remote main branch at commit `d31699b` ("Remove diagnostic logging and runtime transform overrides on weapons") with local modification to `AttachSocketName` (`Hand_R` to `hand_r`) in `ANemesisWeapon.cpp`.
+  - Updated [chat.md](file:///d:/tmp/game/ProjectNemesis/chat.md) and [current_status.md](file:///d:/tmp/game/ProjectNemesis/current_status.md) to record the current state immediately as requested.
+
+### **Topic 16: PIE Input Failure Diagnosis & Resolution**
+* **User**: *ekhon asole amader game ta test korar kotha chilo. to ami test korar jonno play korechi , mouse rignt click korechi kono respons nai, kewboard "r" presh koreche no respons, keyboard e arrow buttons click korechi no movement. charecter still dariye thake jemon ache temon e kono movement hoy na.*
+* **Assistant**:
+  - Diagnosed that the `DefaultMappingContext` was null (`LogEnhancedInput: Warning: Called AddMappingContext with a null Mapping Context!`).
+  - Found that the player could not move or look because the mapping context and basic input actions were not loaded in C++ and were not set in the Blueprint. Additionally, the client version of `ANemesisCharacter` has `Controller` as null during `BeginPlay()`, preventing input setup on clients.
+  - Modified [NemesisCharacter.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.cpp) to dynamically load the default input assets (`IMC_Default`, `IA_Move`, `IA_Look`) via `StaticLoadObject` if they are null, and print helpful warnings for other custom actions (`IA_Sprint`, `IA_Decoy`, `IA_Fire`, `IA_Reload`).
+  - Added code to apply the mapping context during both `BeginPlay()` and `SetupPlayerInputComponent()`, ensuring input is correctly registered when possession occurs.
+  - Instructed the user to use Live Coding (Ctrl+Alt+F11) to compile the C++ changes while the editor is open.
+
+### **Topic 17: Mouse Look & Firing Input Fallbacks**
+* **User**: *arrow key chaple move hocce but mouse look kaj kore na and wright click e fire hoy na fix koro*
+* **Assistant**:
+  - Found that mouse look mappings were stored in `IMC_MouseLook` using `IA_MouseLook` action, which were not loaded or registered in C++.
+  - Found that `IA_Fire` and `IA_Reload` asset files do not exist in the project, preventing any weapon firing or reloading bindings through Enhanced Input.
+  - Modified [NemesisCharacter.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.cpp) to support loading `IMC_MouseLook` and binding it if it exists.
+  - Implemented a legacy input axis mapping fallback (`Turn Right / Left Mouse` and `Look Up / Down Mouse`) and direct key bindings (`LeftMouseButton`, `RightMouseButton`, and `R`) using `UInputComponent::BindKey` in C++. This ensures that mouse look, firing (using Left/Right Click), and reloading work immediately even without Enhanced Input Action assets on disk.
+
+### **Topic 18: Firing Input Polling in Tick & Weapon Logging**
+* **User**: *mouse diye camera hgure but fire kore na. fix koro*
+* **Assistant**:
+  - Found that Enhanced Input can intercept and consume direct legacy key bindings from `SetupPlayerInputComponent()`, preventing direct bindings like `LeftMouseButton` from triggering when `IMC_Default` or `IMC_MouseLook` are active but the corresponding `IA_Fire` asset does not exist.
+  - Modified `ANemesisCharacter::Tick()` in [NemesisCharacter.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.cpp) to poll the Player Controller's hardware state directly using `WasInputKeyJustPressed()` for `EKeys::LeftMouseButton`, `EKeys::RightMouseButton`, and `EKeys::R` on the local client. This completely bypasses Enhanced Input intercepts and guarantees firing and reloading are triggered on key presses.
+  - Added descriptive debug logs inside `OnFireTriggered()`, `ServerFire_Implementation()`, and `ANemesisWeapon::Fire()` in [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp) to output execution context, ownership, and ammo status to the Unreal log.
+  - Instructed the user to run Live Coding (Ctrl+Alt+F11) to compile and test.
+
+### **Topic 19: Visual Tracer & Screen Feedback for Firing, Double-fire Fix**
+* **User**: *mouse diye camera hgure but fire kore na. fix koro*
+* **Assistant**:
+  - Found from user's logs that firing actually succeeded (ammo went from 12 down to 0), but the user felt it "didn't fire" because there were no visual/audio effects (no muzzle flash, sound, or trail) and the magazine emptied instantly because one click fired twice (triggered by both `BindKey` and `Tick` polling fallbacks).
+  - Removed duplicate `BindKey` bindings in [NemesisCharacter.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.cpp), keeping only `Tick` hardware polling for firing and reloading to ensure exactly one bullet is fired per click.
+  - Implemented real-time visual feedback in [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp): draws a bright red laser tracer line (`DrawDebugLine`) from the gun's location to the impact point, and a debug sphere (`DrawDebugSphere`) where the bullet hits the wall.
+  - Instructed the user to run Live Coding (Ctrl+Alt+F11) to compile and test.
+
+### **Topic 20: Gun Sound & AAA Muzzle Flash/Impact Visual Effects**
+* **User**: *sound visual effect nai. add koro*
+* **Assistant**:
+  - Declared `FireSound` (USoundBase), `MuzzleFlash` (UParticleSystem), and `ImpactEffect` (UParticleSystem) variables in [NemesisWeapon.h](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.h).
+  - Loaded AAA Paragon particle assets (`P_BelicaMuzzle` and `P_BelicaHitWorld`) by default in `ANemesisWeapon::ANemesisWeapon()` constructor using `ConstructorHelpers::FObjectFinder` inside [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp).
+  - Loaded `/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue` as a default placeholder gunshot sound in the constructor so that the weapon plays sound feedback out of the box.
+  - Programmed C++ code in `ANemesisWeapon::Fire()` to dynamically play `FireSound` at the gun location, spawn `MuzzleFlash` attached to the active mesh's `Muzzle` socket, and spawn `ImpactEffect` at the bullet's hit location facing the impact normal direction.
+  - Attempted to build, which revealed that compilation is locked because the Unreal Editor is open and Live Coding is active.
+  - Instructed the user to run Live Coding (Ctrl+Alt+F11) in the editor to compile the changes.
+
