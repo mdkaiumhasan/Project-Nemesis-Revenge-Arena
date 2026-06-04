@@ -183,3 +183,10 @@ This file tracks the conversation and design discussions between the User and th
   - Attempted to build, which revealed that compilation is locked because the Unreal Editor is open and Live Coding is active.
   - Instructed the user to run Live Coding (Ctrl+Alt+F11) in the editor to compile the changes.
 
+### **Topic 21: Session Pause & Next Steps**
+* **User**: *ok ekhon progress ad chat record kore rakho baki kaj amra agamikal korbo*
+* **Assistant**:
+  - Saved and documented all current C++ progress and chat history in [chat.md](file:///d:/tmp/game/ProjectNemesis/chat.md) and [current_status.md](file:///d:/tmp/game/ProjectNemesis/current_status.md).
+  - Pushed all updates to GitHub successfully.
+  - Aligned the roadmap to resume with testing the Live Coding compilation and verifying the weapon firing visual/audio feedback tomorrow.
+
