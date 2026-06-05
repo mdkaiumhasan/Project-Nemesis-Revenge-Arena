@@ -61,6 +61,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon Stats")
 	FName AttachSocketName;
 
+	/* Sound played when the weapon is fired */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	class USoundBase* FireSound;
+
+	/* Particle muzzle flash spawned at weapon muzzle */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	class UParticleSystem* MuzzleFlash;
+
+	/* Particle spawned at impact location */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	class UParticleSystem* ImpactEffect;
+
 	/* Delegate fired when current ammo or max ammo changes */
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnAmmoChangedSignature OnAmmoChanged;

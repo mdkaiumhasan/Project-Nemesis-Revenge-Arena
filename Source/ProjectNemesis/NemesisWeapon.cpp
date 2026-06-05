@@ -114,9 +114,14 @@ void ANemesisWeapon::Fire()
 	DrawDebugLine(GetWorld(), TracerStart, TracerEnd, FColor::Red, false, 0.2f, 0, 2.0f);
 
 	// Play gunshot sound at gun location
-	if (FireSound)
+	USoundBase* SoundToPlay = FireSound;
+	if (!SoundToPlay)
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSound, TracerStart);
+		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue")));
+	}
+	if (SoundToPlay)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundToPlay, TracerStart);
 	}
 
 	// Spawn AAA Paragon muzzle flash attached to the active weapon component

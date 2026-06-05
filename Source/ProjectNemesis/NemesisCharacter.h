@@ -148,6 +148,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ReloadAction;
 
+	/** Animation Montage to play when firing */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations", meta = (AllowPrivateAccess = "true"))
+	class UAnimMontage* FireMontage;
+
 protected:
 	/** Called for firing input */
 	void OnFireTriggered();

@@ -120,6 +120,13 @@ ANemesisCharacter::ANemesisCharacter()
 		WristHUDComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		WristHUDComponent->SetCastShadow(false);
 	}
+
+	// Load default fire montage using ObjectFinder
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> FireMontageFinder(TEXT("/Game/Characters/Mannequins/Anims/Pistol/MM_Pistol_Fire_Montage.MM_Pistol_Fire_Montage"));
+	if (FireMontageFinder.Succeeded())
+	{
+		FireMontage = FireMontageFinder.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -220,6 +227,16 @@ void ANemesisCharacter::BeginPlay()
 		if (DefaultWeaponClass)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Dynamically loaded DefaultWeaponClass in BeginPlay"));
+		}
+	}
+
+	// Fallback to load default fire montage dynamically if it was reset to null in editor defaults
+	if (FireMontage == nullptr)
+	{
+		FireMontage = Cast<UAnimMontage>(StaticLoadObject(UAnimMontage::StaticClass(), nullptr, TEXT("/Game/Characters/Mannequins/Anims/Pistol/MM_Pistol_Fire_Montage.MM_Pistol_Fire_Montage")));
+		if (FireMontage)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: Dynamically loaded default FireMontage in BeginPlay"));
 		}
 	}
 
@@ -485,6 +502,13 @@ void ANemesisCharacter::OnRep_CurrentWeapon()
 void ANemesisCharacter::OnFireTriggered()
 {
 	UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: ANemesisCharacter::OnFireTriggered called."));
+	
+	// Play locally for instant prediction
+	if (FireMontage)
+	{
+		PlayAnimMontage(FireMontage);
+	}
+
 	ServerFire();
 }
 
@@ -505,6 +529,12 @@ void ANemesisCharacter::ServerFire_Implementation()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Fire();
+	}
+
+	// Play fire montage on server (which replicates to all clients)
+	if (FireMontage)
+	{
+		PlayAnimMontage(FireMontage);
 	}
 }
 

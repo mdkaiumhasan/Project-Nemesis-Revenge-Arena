@@ -204,5 +204,17 @@ This file tracks the conversation and design discussions between the User and th
   - Pushed all updates to GitHub successfully.
   - Ready to resume tomorrow with compiling the project and testing the weapon effects.
 
+### **Topic 24: Firing Animation Montage and Sound Fallback Fix**
+* **User**: *fire hoy visual effact o dekha jay but sound hoy na and hat uthiye fire kore na hat jemon suja temon e thake.*
+* **Assistant**:
+  - Diagnosed that:
+    1. The `FireSound` property is null/None in the Blueprint assets, preventing sound from playing.
+    2. Firing animations were not configured or played on the character mesh.
+  - Declared and implemented the `FireMontage` variable in [NemesisCharacter.h](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.h) and [NemesisCharacter.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisCharacter.cpp).
+  - Loaded the default pistol fire montage `/Game/Characters/Mannequins/Anims/Pistol/MM_Pistol_Fire_Montage.MM_Pistol_Fire_Montage` in the constructor and added a dynamic fallback in `BeginPlay()`.
+  - Triggered the firing montage in `OnFireTriggered()` (for instant local prediction/snappy feel) and in `ServerFire_Implementation()` (for server authority and replication to all clients).
+  - Implemented a dynamic runtime fallback in [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp) to load and play `/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue` when `FireSound` is null.
+  - Successfully compiled the project using UnrealBuildTool command-line compiler in 138 seconds.
+
 
 
