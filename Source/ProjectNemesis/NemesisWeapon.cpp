@@ -45,7 +45,7 @@ ANemesisWeapon::ANemesisWeapon()
 	AttachSocketName = TEXT("hand_r");
 
 	// Load default sound using ObjectFinder
-	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/ParagonLtBelica/Audio/Cues/LtBelica_Ability_LMB_Engage.LtBelica_Ability_LMB_Engage"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/SoulCity/Sound/Cue/MetalPanel_Vibrate_Cue.MetalPanel_Vibrate_Cue"));
 	if (FireSoundFinder.Succeeded())
 	{
 		FireSound = FireSoundFinder.Object;
@@ -155,7 +155,7 @@ void ANemesisWeapon::MulticastPlayFireEffects_Implementation(const FVector& HitL
 	USoundBase* SoundToPlay = FireSound;
 	if (!SoundToPlay)
 	{
-		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/ParagonLtBelica/Audio/Cues/LtBelica_Ability_LMB_Engage.LtBelica_Ability_LMB_Engage")));
+		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/SoulCity/Sound/Cue/MetalPanel_Vibrate_Cue.MetalPanel_Vibrate_Cue")));
 	}
 	if (SoundToPlay)
 	{

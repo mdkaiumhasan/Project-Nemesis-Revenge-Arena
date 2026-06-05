@@ -503,7 +503,18 @@ void ANemesisCharacter::PlayFireMontage()
 {
 	if (FireMontage && !bIsDead)
 	{
-		PlayAnimMontage(FireMontage);
+		float Duration = PlayAnimMontage(FireMontage);
+		UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: PlayFireMontage. Montage: %s, Mesh: %s, AnimInstance: %s, Duration: %f"), 
+			*FireMontage->GetName(),
+			GetMesh() && GetMesh()->GetSkeletalMeshAsset() ? *GetMesh()->GetSkeletalMeshAsset()->GetName() : TEXT("Null"),
+			GetMesh() && GetMesh()->GetAnimInstance() ? *GetMesh()->GetAnimInstance()->GetName() : TEXT("Null"),
+			Duration);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: PlayFireMontage skipped. Montage: %s, IsDead: %s"), 
+			FireMontage ? *FireMontage->GetName() : TEXT("Null"), 
+			bIsDead ? TEXT("True") : TEXT("False"));
 	}
 }
 
