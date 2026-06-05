@@ -45,7 +45,7 @@ ANemesisWeapon::ANemesisWeapon()
 	AttachSocketName = TEXT("hand_r");
 
 	// Load default sound using ObjectFinder
-	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/SoulCity/Sound/Cue/MetalPanel_Vibrate_Cue.MetalPanel_Vibrate_Cue"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/weapons_Sounds/gun/usp.usp"));
 	if (FireSoundFinder.Succeeded())
 	{
 		FireSound = FireSoundFinder.Object;
@@ -155,7 +155,7 @@ void ANemesisWeapon::MulticastPlayFireEffects_Implementation(const FVector& HitL
 	USoundBase* SoundToPlay = FireSound;
 	if (!SoundToPlay)
 	{
-		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/SoulCity/Sound/Cue/MetalPanel_Vibrate_Cue.MetalPanel_Vibrate_Cue")));
+		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/weapons_Sounds/gun/usp.usp")));
 	}
 	if (SoundToPlay)
 	{
