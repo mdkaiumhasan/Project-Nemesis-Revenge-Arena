@@ -91,6 +91,11 @@ public:
 	/* Returns the static weapon mesh */
 	FORCEINLINE class UStaticMeshComponent* GetStaticWeaponMesh() const { return StaticWeaponMesh; }
 
+protected:
+	/* Broadcasts firing effects (sound, particles, animation) to all clients */
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayFireEffects(const FVector& HitLocation, bool bHit, const FVector& HitNormal);
+
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

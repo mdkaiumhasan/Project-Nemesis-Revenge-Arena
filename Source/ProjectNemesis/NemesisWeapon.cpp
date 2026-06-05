@@ -2,6 +2,7 @@
 
 
 #include "NemesisWeapon.h"
+#include "NemesisCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
@@ -44,7 +45,7 @@ ANemesisWeapon::ANemesisWeapon()
 	AttachSocketName = TEXT("hand_r");
 
 	// Load default sound using ObjectFinder
-	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundFinder(TEXT("/Game/ParagonLtBelica/Audio/Cues/LtBelica_Ability_LMB_Engage.LtBelica_Ability_LMB_Engage"));
 	if (FireSoundFinder.Succeeded())
 	{
 		FireSound = FireSoundFinder.Object;
@@ -108,23 +109,60 @@ void ANemesisWeapon::Fire()
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, ECC_Visibility, QueryParams);
 
-	// Visual Feedback: Draw a bright red tracer line from the weapon's location to the target/impact point
-	FVector TracerStart = GetActorLocation();
 	FVector TracerEnd = bHit ? Hit.ImpactPoint : TraceEnd;
-	DrawDebugLine(GetWorld(), TracerStart, TracerEnd, FColor::Red, false, 0.2f, 0, 2.0f);
+
+	// Call NetMulticast RPC to play visual and audio effects on all clients
+	MulticastPlayFireEffects(TracerEnd, bHit, Hit.ImpactNormal);
+
+	if (bHit)
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (HitActor)
+		{
+			// Apply damage using standard Unreal TakeDamage system
+			FDamageEvent DamageEvent;
+			HitActor->TakeDamage(Damage, DamageEvent, ControllerOwner, PawnOwner);
+		}
+	}
+
+	CurrentAmmo = FMath::Max(0, CurrentAmmo - 1);
+	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
+
+	// On-screen message showing ammo count
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, FString::Printf(TEXT("Weapon Fired! Ammo: %d / %d"), CurrentAmmo, MaxAmmo));
+	}
+}
+
+void ANemesisWeapon::MulticastPlayFireEffects_Implementation(const FVector& HitLocation, bool bHit, const FVector& HitNormal)
+{
+	// Determine the start location of the tracer (try muzzle socket first)
+	FVector TracerStart = GetActorLocation();
+	if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset() && WeaponMesh->DoesSocketExist(TEXT("Muzzle")))
+	{
+		TracerStart = WeaponMesh->GetSocketLocation(TEXT("Muzzle"));
+	}
+	else if (StaticWeaponMesh && StaticWeaponMesh->GetStaticMesh() && StaticWeaponMesh->DoesSocketExist(TEXT("Muzzle")))
+	{
+		TracerStart = StaticWeaponMesh->GetSocketLocation(TEXT("Muzzle"));
+	}
+
+	// Draw a bright red tracer line from the muzzle/weapon to the hit location
+	DrawDebugLine(GetWorld(), TracerStart, HitLocation, FColor::Red, false, 0.2f, 0, 2.0f);
 
 	// Play gunshot sound at gun location
 	USoundBase* SoundToPlay = FireSound;
 	if (!SoundToPlay)
 	{
-		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue")));
+		SoundToPlay = Cast<USoundBase>(StaticLoadObject(USoundBase::StaticClass(), nullptr, TEXT("/Game/ParagonLtBelica/Audio/Cues/LtBelica_Ability_LMB_Engage.LtBelica_Ability_LMB_Engage")));
 	}
 	if (SoundToPlay)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundToPlay, TracerStart);
 	}
 
-	// Spawn AAA Paragon muzzle flash attached to the active weapon component
+	// Spawn muzzle flash attached to the active weapon component
 	if (MuzzleFlash)
 	{
 		if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset())
@@ -143,31 +181,24 @@ void ANemesisWeapon::Fire()
 
 	if (bHit)
 	{
-		AActor* HitActor = Hit.GetActor();
-		if (HitActor)
-		{
-			// Apply damage using standard Unreal TakeDamage system
-			FDamageEvent DamageEvent;
-			HitActor->TakeDamage(Damage, DamageEvent, ControllerOwner, PawnOwner);
-		}
-
 		// Draw a debug sphere at impact point
-		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 12.f, 8, FColor::Red, false, 0.5f);
+		DrawDebugSphere(GetWorld(), HitLocation, 12.f, 8, FColor::Red, false, 0.5f);
 
-		// Spawn AAA Paragon impact visual effects at the hit location
+		// Spawn impact visual effects at the hit location
 		if (ImpactEffect)
 		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation());
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, HitLocation, HitNormal.Rotation());
 		}
 	}
 
-	CurrentAmmo = FMath::Max(0, CurrentAmmo - 1);
-	OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
-
-	// On-screen message showing ammo count
-	if (GEngine)
+	// Play character animation montage on non-local clients (since local client already played it for instant feedback)
+	ANemesisCharacter* CharacterOwner = Cast<ANemesisCharacter>(GetOwner());
+	if (CharacterOwner)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, FString::Printf(TEXT("Weapon Fired! Ammo: %d / %d"), CurrentAmmo, MaxAmmo));
+		if (!CharacterOwner->IsLocallyControlled())
+		{
+			CharacterOwner->PlayFireMontage();
+		}
 	}
 }
 

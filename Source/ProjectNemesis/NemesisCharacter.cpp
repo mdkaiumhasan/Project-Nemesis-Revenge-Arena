@@ -499,15 +499,20 @@ void ANemesisCharacter::OnRep_CurrentWeapon()
 	OnWeaponChanged.Broadcast(CurrentWeapon);
 }
 
+void ANemesisCharacter::PlayFireMontage()
+{
+	if (FireMontage && !bIsDead)
+	{
+		PlayAnimMontage(FireMontage);
+	}
+}
+
 void ANemesisCharacter::OnFireTriggered()
 {
 	UE_LOG(LogTemp, Warning, TEXT("NEMESIS_DEBUG: ANemesisCharacter::OnFireTriggered called."));
 	
 	// Play locally for instant prediction
-	if (FireMontage)
-	{
-		PlayAnimMontage(FireMontage);
-	}
+	PlayFireMontage();
 
 	ServerFire();
 }
@@ -529,12 +534,6 @@ void ANemesisCharacter::ServerFire_Implementation()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Fire();
-	}
-
-	// Play fire montage on server (which replicates to all clients)
-	if (FireMontage)
-	{
-		PlayAnimMontage(FireMontage);
 	}
 }
 

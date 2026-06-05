@@ -216,5 +216,16 @@ This file tracks the conversation and design discussions between the User and th
   - Implemented a dynamic runtime fallback in [NemesisWeapon.cpp](file:///d:/tmp/game/ProjectNemesis/Source/ProjectNemesis/NemesisWeapon.cpp) to load and play `/Game/SoulCity/Sound/Cue/Footstep_Metal_Cue.Footstep_Metal_Cue` when `FireSound` is null.
   - Successfully compiled the project using UnrealBuildTool command-line compiler in 138 seconds.
 
+### **Topic 25: Multiplayer Fire Effects & Gunshot Sound Replication**
+* **User**: *continue*
+* **Assistant**:
+  - Diagnosed that weapon fire sounds, muzzle flashes, and tracers were not playing on the client because they were executed only on the server without replication.
+  - Declared and implemented a NetMulticast RPC `MulticastPlayFireEffects` in `ANemesisWeapon` to replicate audio/visual effects (gunshot sound, muzzle flash emitter, tracer lines, impact particles, and debug impact spheres) to all clients.
+  - Replaced the placeholder footstep sound cue in the constructor and fallbacks of `ANemesisWeapon` with the authentic Lt. Belica weapon firing sound cue `/Game/ParagonLtBelica/Audio/Cues/LtBelica_Ability_LMB_Engage`.
+  - Added a public function `PlayFireMontage()` in `ANemesisCharacter` to play the firing montage and prevent access errors for private members in `ANemesisWeapon`.
+  - Configured `MulticastPlayFireEffects` to trigger the character's montage playing on non-local clients, preventing double-animation playing on the local client who already predicts it locally.
+  - Closed the Unreal Editor to release Live Coding locks, successfully compiled the project using `UnrealBuildTool` in 19.35 seconds, and documented the verification plan.
+
+
 
 

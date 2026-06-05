@@ -188,6 +188,10 @@ public:
 	/** Override TakeDamage to route through attributes */
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+	/** Plays the firing animation montage */
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlayFireMontage();
+
 	/** Resets character state after a round ends */
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ResetCharacterState(const FVector& NewLocation);
